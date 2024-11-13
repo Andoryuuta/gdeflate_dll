@@ -127,3 +127,6 @@ reports/
 #CMake output folders
 [Oo]ut
 [Bb]uild
+
+# Python
+__pycache__
