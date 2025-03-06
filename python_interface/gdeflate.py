@@ -51,6 +51,13 @@ class GDeflate:
         ]
         self._get_uncompressed_size_func.restype = c_bool
 
+        # uint64_t gdeflate_get_compress_bound(uint64_t size)
+        self._get_compress_bound = self._dll.gdeflate_get_compress_bound
+        self._get_compress_bound.argtypes = [
+            c_uint64,          # input_size
+        ]
+        self._get_compress_bound.restype = c_uint64
+
         # bool gdeflate_decompress(
         #     uint8_t* output,
         #     uint64_t output_size,
@@ -166,9 +173,14 @@ class GDeflate:
         Raises:
             GDeflateError: If compression fails
         """
-        # Allocate output buffer (worst case: same size as input)
-        output_size = c_uint64(len(data))
-        output_array = (c_uint8 * len(data))()
+
+        # Get size of output buffer to allocate,
+        # small inputs _can_ compress to be larger than the input buffer.
+        bounded_output_size = self._get_compress_bound(c_uint64(len(data)))
+
+        # Allocate input/output buffers and output size var.
+        output_size = c_uint64(bounded_output_size)
+        output_array = (c_uint8 * bounded_output_size)()
         input_array = (c_uint8 * len(data))(*data)
         
         success = self._compress_func(
@@ -185,37 +197,3 @@ class GDeflate:
         
         # Return only the actual compressed bytes
         return bytes(output_array[:output_size.value])
-
-# def main():
-#     try:
-#         # Initialize the wrapper
-#         gdeflate = GDeflate()
-        
-#         # Example data
-#         original_data = b"Hello, World!" * 1000
-        
-#         # Compress the data using different compression levels
-#         compressed_fastest = gdeflate.compress(original_data, level=GDeflate.FASTEST)
-#         print(f"Compressed size (fastest): {len(compressed_fastest)} bytes")
-        
-#         compressed_default = gdeflate.compress(original_data, level=GDeflate.DEFAULT)
-#         print(f"Compressed size (default): {len(compressed_default)} bytes")
-        
-#         compressed_best = gdeflate.compress(original_data, level=GDeflate.BEST_RATIO)
-#         print(f"Compressed size (best ratio): {len(compressed_best)} bytes")
-        
-#         uncompressed_size = gdeflate.get_uncompressed_size(compressed_best)
-#         print(f"Uncompressed size: {uncompressed_size} bytes")
-
-#         # Decompress and verify
-#         decompressed = gdeflate.decompress(compressed_best, num_workers=4)
-#         assert decompressed == original_data
-#         print("Compression/decompression successful!")
-        
-#     except GDeflateError as e:
-#         print(f"GDeflate error: {e}")
-#     except Exception as e:
-#         print(f"Unexpected error: {e}")
-
-# if __name__ == "__main__":
-#     main()

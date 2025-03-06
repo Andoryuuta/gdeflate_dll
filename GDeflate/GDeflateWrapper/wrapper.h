@@ -22,6 +22,8 @@ extern "C"
     GDEFLATE_API bool
     gdeflate_get_uncompressed_size(uint8_t* input, uint64_t input_size, uint64_t* uncompressed_size);
 
+    GDEFLATE_API uint64_t gdeflate_get_compress_bound(uint64_t size);
+
     GDEFLATE_API bool gdeflate_decompress(
         uint8_t* output,
         uint64_t output_size,

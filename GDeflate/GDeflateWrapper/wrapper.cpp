@@ -19,6 +19,11 @@ extern "C"
         return true;
     }
 
+    uint64_t gdeflate_get_compress_bound(uint64_t size)
+    {
+        return GDeflate::CompressBound(size);
+    }
+
     bool gdeflate_decompress(
         uint8_t* output,
         uint64_t output_size,
